@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "crystal-addon",
+  "version": "${version}",
+  "name": "CrystalAddon",
+  "description": "Made This Addon For Fun",
+  "authors": [
+    "TryFastv16"
+  ],
+  "contact": {
+    "repo": "https://github.com/TryFast/CrystalAddonMeteor"
+  },
+  "icon": "assets/template/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "meteor": [
+      "com.khan.crystaladdon.CrystalESPAddon"
+    ]
+  },
+  "mixins": [
+    "addon-template.mixins.json"
+  ],
+  "custom": {
+    "meteor-client:color": "225,25,25"
+  },
+  "depends": {
+    "java": ">=21",
+    "minecraft": ["${mc_version}"],
+    "meteor-client": "*"
+  }
+}

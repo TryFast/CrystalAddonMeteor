@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "com.khan.crystaladdon.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ExampleMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
