@@ -1,6 +1,6 @@
 package com.khan.crystaladdon.modules;
 
-import com.khan.crystaladdon.CrystalESPAddon;
+import com.khan.crystaladdon.CrystalAddon;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
 import meteordevelopment.meteorclient.settings.ColorSetting;
 import meteordevelopment.meteorclient.settings.IntSetting;
@@ -19,7 +19,7 @@ public class CrystalESP extends Module {
     private final Setting<SettingColor> crystalColor = sgGeneral.add(new ColorSetting.Builder()
         .name("crystal-color")
         .description("Color for rendering End Crystals.")
-        .defaultValue(new SettingColor(255, 0, 0, 100)) // Lowered opacity
+        .defaultValue(new SettingColor(255, 0, 0, 100))
         .build()
     );
     private final Setting<Integer> maxDistance = sgGeneral.add(new IntSetting.Builder()
@@ -31,7 +31,7 @@ public class CrystalESP extends Module {
     );
 
     public CrystalESP() {
-        super(CrystalESPAddon.Main, "crystal-esp", "Highlights End Crystals in the world.");
+        super(CrystalAddon.Main, "crystal-esp", "Highlights End Crystals in the world.");
     }
 
     @EventHandler

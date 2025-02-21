@@ -6,15 +6,17 @@ import meteordevelopment.meteorclient.systems.modules.Modules;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.khan.crystaladdon.modules.CrystalESP;
+import com.khan.crystaladdon.modules.BloodKillEffect;
 
-public class CrystalESPAddon extends MeteorAddon {
-    public static final Logger LOG = LoggerFactory.getLogger(CrystalESPAddon.class);
+public class CrystalAddon extends MeteorAddon {
+    public static final Logger LOG = LoggerFactory.getLogger(CrystalAddon.class);
     public static final Category Main = new Category("CrystalAddon");
 
     @Override
     public void onInitialize() {
-        LOG.info("Initializing CrystalESPAddon!");
+        LOG.info("Initializing CrystalAddon!");
         Modules.get().add(new CrystalESP());
+        Modules.get().add(new BloodKillEffect());
     }
 
     @Override

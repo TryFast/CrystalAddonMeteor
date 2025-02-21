@@ -14,7 +14,7 @@
   "environment": "client",
   "entrypoints": {
     "meteor": [
-      "com.khan.crystaladdon.CrystalESPAddon"
+      "com.khan.crystaladdon.CrystalAddon"
     ]
   },
   "mixins": [

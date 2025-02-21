@@ -1,6 +1,6 @@
 package com.khan.crystaladdon.mixin;
 
-import com.khan.crystaladdon.CrystalESPAddon;
+import com.khan.crystaladdon.CrystalAddon;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,6 +26,6 @@ public abstract class ExampleMixin {
      */
     @Inject(method = "<init>", at = @At("TAIL"))
     private void onGameLoaded(RunArgs args, CallbackInfo ci) {
-        CrystalESPAddon.LOG.info("Hello from ExampleMixin!");
+        CrystalAddon.LOG.info("Hello from ExampleMixin!");
     }
 }
