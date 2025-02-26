@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "crystal-addon",
-  "version": "${version}",
+  "version": "v1.3.0",
   "name": "CrystalAddon",
   "description": "Made This Addon For Fun",
   "authors": [
