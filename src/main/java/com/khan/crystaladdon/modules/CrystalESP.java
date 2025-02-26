@@ -38,12 +38,11 @@ public class CrystalESP extends Module {
     private void onRender(Render3DEvent event) {
         if (mc.world == null || mc.player == null) return;
 
-        mc.world.getEntitiesByClass(EndCrystalEntity.class, mc.player.getBoundingBox().expand(maxDistance.get()), e -> true)
-            .forEach(crystal -> {
-                if (mc.player.getPos().distanceTo(crystal.getPos()) > maxDistance.get()) return;
+        for (EndCrystalEntity crystal : mc.world.getEntitiesByClass(EndCrystalEntity.class, mc.player.getBoundingBox().expand(maxDistance.get()), e -> true)) {
+            if (mc.player.getPos().distanceTo(crystal.getPos()) > maxDistance.get()) continue;
 
-                Box box = crystal.getBoundingBox();
-                event.renderer.box(box, crystalColor.get(), crystalColor.get(), ShapeMode.Both, 0);
-            });
+            Box box = crystal.getBoundingBox();
+            event.renderer.box(box, crystalColor.get(), crystalColor.get(), ShapeMode.Both, 0);
+        }
     }
 }
