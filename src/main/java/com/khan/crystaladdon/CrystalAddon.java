@@ -1,8 +1,6 @@
 package com.khan.crystaladdon;
 
-import com.khan.crystaladdon.commands.BlocklistCommand;
 import meteordevelopment.meteorclient.addons.MeteorAddon;
-import meteordevelopment.meteorclient.commands.Command;
 import meteordevelopment.meteorclient.commands.Commands;
 import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
@@ -22,7 +20,6 @@ public class CrystalAddon extends MeteorAddon {
         Modules.get().add(new CrystalESP());
         Modules.get().add(new BloodKillEffect());
         Modules.get().add(new iTristanGreet());
-        Commands.add(new BlocklistCommand());
     }
 
     @Override

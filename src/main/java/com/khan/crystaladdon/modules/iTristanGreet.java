@@ -7,7 +7,6 @@ import meteordevelopment.meteorclient.settings.IntSetting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.settings.Setting;
-import meteordevelopment.meteorclient.utils.player.ChatUtils;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
@@ -20,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class iTristanGreet extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
@@ -33,15 +33,17 @@ public class iTristanGreet extends Module {
 
     private final Setting<Integer> messageDelay = sgGeneral.add(new IntSetting.Builder()
         .name("message-delay")
-        .description("Delay in seconds between greeting messages.")
+        .description("Cooldown in seconds between greeting messages.")
         .defaultValue(5)
-        .min(1)
+        .min(0)
         .sliderMax(60)
         .build()
     );
 
     private List<String> blockedUsers = new ArrayList<>();
     private final Path blocklistPath = Paths.get("crystaladdon", "greet_blocklist.txt");
+
+    private final AtomicBoolean isOnCooldown = new AtomicBoolean(false);
 
     public iTristanGreet() {
         super(CrystalAddon.Main, "itristan's-greet", "Greets players when they join the server.");
@@ -52,6 +54,7 @@ public class iTristanGreet extends Module {
     @Override
     public void onActivate() {
         loadBlocklist();
+        isOnCooldown.set(false);
     }
 
     private void ensureBlocklistExists() {
@@ -106,42 +109,73 @@ public class iTristanGreet extends Module {
         }
     }
 
+    public boolean isPlayerBlocked(String playerName) {
+        return blockedUsers.contains(playerName);
+    }
+
+    public int getBlockedUsersCount() {
+        return blockedUsers.size();
+    }
+
+    public void listBlockedPlayers() {
+        if (blockedUsers.isEmpty()) {
+            info("Blocklist is empty.");
+        } else {
+            info("Blocked users (" + blockedUsers.size() + "):");
+            for (String player : blockedUsers) {
+                info(" - " + player);
+            }
+        }
+    }
+
+    private void sendGreeting(String playerName) {
+        // If we're on cooldown, don't send a greeting
+        if (isOnCooldown.get()) {
+            info("Greeting for " + playerName + " skipped (on cooldown)");
+            return;
+        }
+
+        // Format and send the greeting immediately
+        String formattedMessage = message.get().replace("{player}", playerName);
+        MinecraftClient.getInstance().getNetworkHandler().sendChatMessage(formattedMessage);
+
+        // Set cooldown if the delay is > 0
+        int delaySeconds = messageDelay.get();
+        if (delaySeconds > 0) {
+            // Set the cooldown flag
+            isOnCooldown.set(true);
+
+            // Start a thread to wait for the cooldown period
+            Thread cooldownThread = new Thread(() -> {
+                try {
+                    Thread.sleep(delaySeconds * 1000);
+                    isOnCooldown.set(false);
+                    info("Greeting cooldown expired, ready to greet next player");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+            cooldownThread.setDaemon(true);
+            cooldownThread.start();
+        }
+    }
+
     @EventHandler
     private void onPlayerJoin(PacketEvent.Receive event) {
         if (event.packet instanceof PlayerListS2CPacket packet && packet.getActions().contains(Action.ADD_PLAYER)) {
             packet.getEntries().forEach(entry -> {
                 String playerName = entry.profile().getName();
 
+                // Skip if player is in blocklist
                 if (blockedUsers.contains(playerName)) {
                     info("Skipping greeting for blocked user: " + playerName);
                     return;
                 }
 
-                Thread thread = new Thread(() -> {
-                    try {
-                        int delayMs = messageDelay.get() * 1000;
-                        Thread.sleep(delayMs);
-
-                        String formattedMessage = message.get().replace("{player}", playerName);
-
-                        MinecraftClient.getInstance().execute(() ->
-                            MinecraftClient.getInstance().getNetworkHandler().sendChatMessage(formattedMessage)
-                        );
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                });
-                thread.start();
+                // Schedule the message to be sent on the main thread
+                MinecraftClient.getInstance().execute(() -> sendGreeting(playerName));
             });
         }
-    }
-
-    private void info(String message) {
-        ChatUtils.info("BlockListInfo", message);
-    }
-
-    private void error(String message) {
-        ChatUtils.error("BlockListError", message);
     }
 
     public Path getBlocklistPath() {
