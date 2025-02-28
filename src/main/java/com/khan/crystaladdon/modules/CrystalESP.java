@@ -2,10 +2,7 @@ package com.khan.crystaladdon.modules;
 
 import com.khan.crystaladdon.CrystalAddon;
 import meteordevelopment.meteorclient.events.render.Render3DEvent;
-import meteordevelopment.meteorclient.settings.ColorSetting;
-import meteordevelopment.meteorclient.settings.IntSetting;
-import meteordevelopment.meteorclient.settings.Setting;
-import meteordevelopment.meteorclient.settings.SettingGroup;
+import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.renderer.ShapeMode;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
@@ -18,15 +15,47 @@ public class CrystalESP extends Module {
 
     private final Setting<SettingColor> crystalColor = sgGeneral.add(new ColorSetting.Builder()
         .name("crystal-color")
-        .description("Color for rendering End Crystals.")
+        .description("Color for rendering End Crystals when PvP Mode is disabled.")
         .defaultValue(new SettingColor(255, 0, 0, 100))
         .build()
     );
+
     private final Setting<Integer> maxDistance = sgGeneral.add(new IntSetting.Builder()
         .name("max-distance")
         .description("Maximum distance (in blocks) to render ESP.")
         .defaultValue(12)
         .sliderRange(1, 300)
+        .build()
+    );
+
+    private final Setting<Boolean> pvpMode = sgGeneral.add(new BoolSetting.Builder()
+        .name("pvp-mode")
+        .description("Colors crystals based on potential damage relative to your Y level.")
+        .defaultValue(false)
+        .build()
+    );
+
+    private final Setting<SettingColor> highDamageColor = sgGeneral.add(new ColorSetting.Builder()
+        .name("high-damage-color")
+        .description("Color for crystals at or above your Y level (high damage).")
+        .defaultValue(new SettingColor(255, 0, 0, 100))
+        .visible(() -> pvpMode.get())
+        .build()
+    );
+
+    private final Setting<SettingColor> mediumDamageColor = sgGeneral.add(new ColorSetting.Builder()
+        .name("medium-damage-color")
+        .description("Color for crystals 1 block below your Y level (medium damage).")
+        .defaultValue(new SettingColor(255, 255, 0, 100))
+        .visible(() -> pvpMode.get())
+        .build()
+    );
+
+    private final Setting<SettingColor> lowDamageColor = sgGeneral.add(new ColorSetting.Builder()
+        .name("low-damage-color")
+        .description("Color for crystals 2+ blocks below your Y level (low damage).")
+        .defaultValue(new SettingColor(0, 255, 0, 100))
+        .visible(() -> pvpMode.get())
         .build()
     );
 
@@ -42,7 +71,26 @@ public class CrystalESP extends Module {
             if (mc.player.getPos().distanceTo(crystal.getPos()) > maxDistance.get()) continue;
 
             Box box = crystal.getBoundingBox();
-            event.renderer.box(box, crystalColor.get(), crystalColor.get(), ShapeMode.Both, 0);
+
+            if (pvpMode.get()) {
+                int playerY = mc.player.getBlockY();
+                int crystalY = (int) crystal.getY();
+                int yDifference = playerY - crystalY;
+
+                SettingColor color;
+
+                if (yDifference >= 0) {
+                    color = highDamageColor.get();
+                } else if (yDifference == -1) {
+                    color = mediumDamageColor.get();
+                } else {
+                    color = lowDamageColor.get();
+                }
+
+                event.renderer.box(box, color, color, ShapeMode.Both, 0);
+            } else {
+                event.renderer.box(box, crystalColor.get(), crystalColor.get(), ShapeMode.Both, 0);
+            }
         }
     }
 }

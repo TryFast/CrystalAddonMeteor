@@ -4,6 +4,7 @@ import com.khan.crystaladdon.CrystalAddon;
 import meteordevelopment.meteorclient.events.packets.PacketEvent;
 import meteordevelopment.meteorclient.settings.StringSetting;
 import meteordevelopment.meteorclient.settings.IntSetting;
+import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.systems.modules.Module;
 import meteordevelopment.meteorclient.settings.Setting;
@@ -28,6 +29,21 @@ public class iTristanGreet extends Module {
         .name("greeting-message")
         .description("Customizable greeting message with {player} placeholder.")
         .defaultValue("Welcome {player} to the server!")
+        .build()
+    );
+
+    private final Setting<Boolean> commandMode = sgGeneral.add(new BoolSetting.Builder()
+        .name("command-mode")
+        .description("Send a command instead of a chat message.")
+        .defaultValue(false)
+        .build()
+    );
+
+    private final Setting<String> command = sgGeneral.add(new StringSetting.Builder()
+        .name("command")
+        .description("Command to execute when a player joins. Use {player} as a placeholder.")
+        .defaultValue("/msg {player} Welcome to the server!")
+        .visible(() -> commandMode.get())
         .build()
     );
 
@@ -129,26 +145,31 @@ public class iTristanGreet extends Module {
     }
 
     private void sendGreeting(String playerName) {
-        // If we're on cooldown, don't send a greeting
         if (isOnCooldown.get()) {
             info("Greeting for " + playerName + " skipped (on cooldown)");
             return;
         }
 
-        // Format and send the greeting immediately
-        String formattedMessage = message.get().replace("{player}", playerName);
-        MinecraftClient.getInstance().getNetworkHandler().sendChatMessage(formattedMessage);
+        if (commandMode.get()) {
+            String formattedCommand = command.get().replace("{player}", playerName);
+            if (formattedCommand.startsWith("/")) {
+                formattedCommand = formattedCommand.substring(1);
+            }
+            MinecraftClient.getInstance().getNetworkHandler().sendCommand(formattedCommand);
+            info("Sent command for " + playerName);
+        } else {
+            String formattedMessage = message.get().replace("{player}", playerName);
+            MinecraftClient.getInstance().getNetworkHandler().sendChatMessage(formattedMessage);
+            info("Sent greeting for " + playerName);
+        }
 
-        // Set cooldown if the delay is > 0
         int delaySeconds = messageDelay.get();
         if (delaySeconds > 0) {
-            // Set the cooldown flag
             isOnCooldown.set(true);
 
-            // Start a thread to wait for the cooldown period
             Thread cooldownThread = new Thread(() -> {
                 try {
-                    Thread.sleep(delaySeconds * 1000);
+                    Thread.sleep(delaySeconds * 500);
                     isOnCooldown.set(false);
                     info("Greeting cooldown expired, ready to greet next player");
                 } catch (InterruptedException e) {
@@ -166,13 +187,11 @@ public class iTristanGreet extends Module {
             packet.getEntries().forEach(entry -> {
                 String playerName = entry.profile().getName();
 
-                // Skip if player is in blocklist
                 if (blockedUsers.contains(playerName)) {
                     info("Skipping greeting for blocked user: " + playerName);
                     return;
                 }
 
-                // Schedule the message to be sent on the main thread
                 MinecraftClient.getInstance().execute(() -> sendGreeting(playerName));
             });
         }

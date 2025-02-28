@@ -33,10 +33,10 @@ public class BloodKillEffect extends Module {
         .name("particle-multiplier")
         .description("Number of particles to spawn on death.")
         .defaultValue(128)
-        .min(10)
-        .max(200)
+        .min(1)
+        .max(256)
         .sliderMin(1)
-        .sliderMax(200)
+        .sliderMax(256)
         .build()
     );
 
