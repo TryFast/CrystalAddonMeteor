@@ -40,7 +40,7 @@ public class BloodKillEffect extends Module {
         .build()
     );
 
-    private final Set<Integer> processedEntities = new HashSet<>();
+    private final Set<Integer> deadEntities = new HashSet<>();
 
     public BloodKillEffect() {
         super(CrystalAddon.Main, "blood-kill-effect", "Renders a redstone block particle effect when a living entity dies.");
@@ -50,31 +50,45 @@ public class BloodKillEffect extends Module {
     private void onTick(TickEvent.Pre event) {
         if (mc.world == null) return;
 
-        processedEntities.removeIf(id -> mc.world.getEntityById(id) == null);
-
         for (Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof LivingEntity)) continue;
 
-            if (playersOnly.get() && !(entity instanceof PlayerEntity)) continue;
-
             LivingEntity living = (LivingEntity) entity;
+            int entityId = entity.getId();
 
-            if (living.getHealth() <= 0 && !processedEntities.contains(entity.getId())) {
-                processedEntities.add(entity.getId());
-
-                double x = living.getX();
-                double y = living.getY() + living.getEyeHeight(living.getPose());
-                double z = living.getZ();
-                BlockState blockState = Blocks.REDSTONE_BLOCK.getDefaultState();
-
-                for (int i = 0; i < particleMultiplier.get(); i++) {
-                    mc.world.addParticle(
-                        new BlockStateParticleEffect(ParticleTypes.BLOCK, blockState),
-                        x, y, z,
-                        0, 0, 0
-                    );
-                }
+            if (shouldSpawnParticles(living)) {
+                spawnDeathParticles(living);
+                deadEntities.add(entityId);
             }
+        }
+
+        deadEntities.removeIf(id -> mc.world.getEntityById(id) == null);
+    }
+
+    private boolean shouldSpawnParticles(LivingEntity entity) {
+        if (deadEntities.contains(entity.getId())) return false;
+
+        if (playersOnly.get() && !(entity instanceof PlayerEntity)) return false;
+
+        return entity.isDead() || entity.getHealth() <= 0;
+    }
+
+    private void spawnDeathParticles(LivingEntity entity) {
+        double x = entity.getX();
+        double y = entity.getY() + entity.getEyeHeight(entity.getPose());
+        double z = entity.getZ();
+        BlockState blockState = Blocks.REDSTONE_BLOCK.getDefaultState();
+
+        for (int i = 0; i < particleMultiplier.get(); i++) {
+            double offsetX = (Math.random() - 0.5) * 0.5;
+            double offsetY = (Math.random() - 0.5) * 0.5;
+            double offsetZ = (Math.random() - 0.5) * 0.5;
+
+            mc.world.addParticle(
+                new BlockStateParticleEffect(ParticleTypes.BLOCK, blockState),
+                x + offsetX, y + offsetY, z + offsetZ,
+                offsetX * 0.5, offsetY * 0.5, offsetZ * 0.5
+            );
         }
     }
 }

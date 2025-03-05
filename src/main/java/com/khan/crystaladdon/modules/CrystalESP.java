@@ -20,18 +20,20 @@ public class CrystalESP extends Module {
         .build()
     );
 
-    private final Setting<Integer> maxDistance = sgGeneral.add(new IntSetting.Builder()
-        .name("max-distance")
-        .description("Maximum distance (in blocks) to render ESP.")
-        .defaultValue(12)
-        .sliderRange(1, 300)
-        .build()
-    );
-
     private final Setting<Boolean> pvpMode = sgGeneral.add(new BoolSetting.Builder()
         .name("pvp-mode")
         .description("Colors crystals based on potential damage relative to your Y level.")
         .defaultValue(false)
+        .build()
+    );
+
+    private final Setting<Integer> maxDistance = sgGeneral.add(new IntSetting.Builder()
+        .name("max-distance")
+        .description("Maximum distance (in blocks) to render ESP.")
+        .defaultValue(12)
+        .min(1)
+        .max(12)
+        .visible(() -> !pvpMode.get())
         .build()
     );
 
@@ -67,8 +69,10 @@ public class CrystalESP extends Module {
     private void onRender(Render3DEvent event) {
         if (mc.world == null || mc.player == null) return;
 
-        for (EndCrystalEntity crystal : mc.world.getEntitiesByClass(EndCrystalEntity.class, mc.player.getBoundingBox().expand(maxDistance.get()), e -> true)) {
-            if (mc.player.getPos().distanceTo(crystal.getPos()) > maxDistance.get()) continue;
+        int currentMaxDistance = pvpMode.get() ? 12 : maxDistance.get();
+
+        for (EndCrystalEntity crystal : mc.world.getEntitiesByClass(EndCrystalEntity.class, mc.player.getBoundingBox().expand(currentMaxDistance), e -> true)) {
+            if (mc.player.getPos().distanceTo(crystal.getPos()) > currentMaxDistance) continue;
 
             Box box = crystal.getBoundingBox();
 
