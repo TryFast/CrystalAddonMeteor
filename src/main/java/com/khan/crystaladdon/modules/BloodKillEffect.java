@@ -22,9 +22,9 @@ import java.util.Set;
 public class BloodKillEffect extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
 
-    private final Setting<Boolean> playersOnly = sgGeneral.add(new BoolSetting.Builder()
-        .name("players-only")
-        .description("Only spawn particles when players are killed (not mobs).")
+    private final Setting<Boolean> playerMode = sgGeneral.add(new BoolSetting.Builder()
+        .name("player-mode")
+        .description("When enabled, only works for players. When disabled, only works for mobs.")
         .defaultValue(true)
         .build()
     );
@@ -68,9 +68,15 @@ public class BloodKillEffect extends Module {
     private boolean shouldSpawnParticles(LivingEntity entity) {
         if (deadEntities.contains(entity.getId())) return false;
 
-        if (playersOnly.get() && !(entity instanceof PlayerEntity)) return false;
+        boolean isDead = entity.isDead() || entity.getHealth() <= 0;
+        if (!isDead) return false;
 
-        return entity.isDead() || entity.getHealth() <= 0;
+        if (playerMode.get()) {
+            return entity instanceof PlayerEntity;
+        }
+        else {
+            return !(entity instanceof PlayerEntity);
+        }
     }
 
     private void spawnDeathParticles(LivingEntity entity) {
